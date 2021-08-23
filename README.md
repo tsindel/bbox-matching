@@ -1,4 +1,4 @@
-# bbox-matching
+# Bounding Box Matching
 Bounding Box Matching using YOLOv4, implemented in Tensorflow and LabVIEW
 
 This is an auxiliary repository to the "Bounding Box Matching: A Sparse Object-centric
@@ -14,6 +14,7 @@ To recreate the results in Fig. 8 of the paper, perform the following steps:
 7) Configure camera VIs to correspond to the connected stereo rig
 8) Run the VI and observe the results
 
+# Stereo rig geometry
 To recreate the results in Fig. 5-7 of the paper, perform the following steps:
 1) Open folder "stereo-rig-top" in separate project (IDE) and configure the interpreter (GPU enabled works better)
 2) Import dependencies
