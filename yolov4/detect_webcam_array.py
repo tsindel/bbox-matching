@@ -1,27 +1,19 @@
-import os
-print('...and the CWD is:' + str(os.getcwd()))
-rel_path = './data/classes'
-print('...and the relative path is:' + str(rel_path))
 import sys
-import time
 import numpy as np
 import tensorflow as tf
-physical_devices = tf.config.experimental.list_physical_devices('GPU')
-if len(physical_devices) > 0:
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-# from absl import flags
-# from absl.flags import FLAGS
 import core.utils as utils
+import cv2
 from core.yolov4 import filter_boxes
 from tensorflow.python.saved_model import tag_constants
-from PIL import Image
-import cv2
 from tensorflow.compat.v1 import ConfigProto
 from tensorflow.compat.v1 import InteractiveSession
 
+physical_devices = tf.config.experimental.list_physical_devices('GPU')
+if len(physical_devices) > 0:
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
 tf.compat.v1.app.flags.DEFINE_string('framework', 'tf', '(tf, tflite, trt')
-tf.compat.v1.app.flags.DEFINE_string('weights', './checkpoints/yolov4-416',
-                    'path to weights file')
+tf.compat.v1.app.flags.DEFINE_string('weights', './checkpoints/yolov4-416', 'path to weights file')
 tf.compat.v1.app.flags.DEFINE_integer('size', 416, 'resize images to')
 tf.compat.v1.app.flags.DEFINE_boolean('tiny', False, 'yolo or yolo-tiny')
 tf.compat.v1.app.flags.DEFINE_string('model', 'yolov4', 'yolov3 or yolov4')
@@ -33,7 +25,7 @@ tf.compat.v1.app.flags.DEFINE_float('score', 0.25, 'score threshold')
 tf.compat.v1.app.flags.DEFINE_boolean('dont_show', False, 'dont show video output')
 
 if not hasattr(sys, 'argv'):
-    sys.argv  = ['./detect_webcam_array.py']
+    sys.argv = ['./detect_webcam_array.py']
 
 config = ConfigProto()
 config.gpu_options.allow_growth = True
@@ -68,26 +60,24 @@ if FLAGS.output:
     codec = cv2.VideoWriter_fourcc(*FLAGS.output_format)
     out = cv2.VideoWriter(FLAGS.output, codec, fps, (width, height))
 
-def infer(wire, frame):
-    out = None
 
+def infer(wire, frame):
     frame = np.array(frame, dtype='uint8')
 
-    frame_size = frame.shape[:2]
-    image_data = cv2.resize(frame, (input_size, input_size))
-    image_data = image_data / 255.
+    image_data = cv2.resize(frame, (input_size, input_size)) / 255.
     image_data = image_data[np.newaxis, ...].astype(np.float32)
 
     if FLAGS.framework == 'tflite':
         interpreter.set_tensor(input_details[0]['index'], image_data)
         interpreter.invoke()
         pred = [interpreter.get_tensor(output_details[i]['index']) for i in range(len(output_details))]
-        if FLAGS.model == 'yolov3' and FLAGS.tiny == True:
+        if FLAGS.model == 'yolov3' and FLAGS.tiny:
             boxes, pred_conf = filter_boxes(pred[1], pred[0], score_threshold=0.25,
                                             input_shape=tf.constant([input_size, input_size]))
         else:
             boxes, pred_conf = filter_boxes(pred[0], pred[1], score_threshold=0.25,
                                             input_shape=tf.constant([input_size, input_size]))
+
     else:
         batch_data = tf.constant(image_data)
         pred_bbox = inference(batch_data)
@@ -108,14 +98,15 @@ def infer(wire, frame):
     session.close()
     cv2.destroyAllWindows()
 
-    valid_detections = np.array(valid_detections).reshape(-1) # element 0
-    classes = np.array(classes).reshape(-1) # element 1-50
-    scores = np.array(scores).reshape(-1) # element 51-100
-    boxes = np.array(boxes).reshape(-1) # element 101-300 (each 4 consecutive elements describe one bbox)
+    valid_detections = np.array(valid_detections).reshape(-1)  # element 0
+    classes = np.array(classes).reshape(-1)  # element 1-50
+    scores = np.array(scores).reshape(-1)  # element 51-100
+    boxes = np.array(boxes).reshape(-1)  # element 101-300 (each 4 consecutive elements describe one bbox)
 
     result = np.concatenate((valid_detections, classes, scores, boxes))
 
     return result
+
 
 if __name__ == '__main__':
     while True:
