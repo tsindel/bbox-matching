@@ -4,7 +4,7 @@ Bounding Box Matching using YOLOv4, implemented in Tensorflow and LabVIEW
 This is an auxiliary repository to the "Bounding Box Matching: A Sparse Object-centric
 Correspondence Method for Stereo Vision" paper.
 
-To recreate the results of the paper, perform the following steps:
+To recreate the results in Fig. 8 of the paper, perform the following steps:
 1) Clone the repo
 2) Read README_yolov4 file in yolov4 subfolder and follow the steps to configure Tensorflow implementation of YOLOv4
 3) Install LabVIEW Runtime 2019 or newer with Vision Development Module
