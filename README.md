@@ -13,3 +13,9 @@ To recreate the results in Fig. 8 of the paper, perform the following steps:
 6) Open "main" VI in LabVIEW Runtime
 7) Configure camera VIs to correspond to the connected stereo rig
 8) Run the VI and observe the results
+
+To recreate the results in Fig. 5-7 of the paper, perform the following steps:
+1) Open folder "stereo-rig-top" in separate project (IDE) and configure the interpreter (GPU enabled works better)
+2) Import dependencies
+3) If desired, modify param values in lines 188-189, 192-195, 204 and 221
+4) Run the "main" script
