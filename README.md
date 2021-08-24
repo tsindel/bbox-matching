@@ -12,7 +12,9 @@ To recreate the results in Fig. 8 of the paper, perform the following steps:
 5) Calibrate the stereo rig using the VI in "calibrate" subfolder and save the calibration file. Replace the old file in "stereo" folder with the new one.
 6) Open "main" VI in LabVIEW Runtime
 7) Configure camera VIs to correspond to the connected stereo rig
-8) Run the VI and observe the results
+8) Run the VI and observe the results (should look as following)
+
+![labview_output](https://user-images.githubusercontent.com/84905798/130624333-8f28241f-4ef4-4b04-810d-ff4479111d93.png)
 
 # Stereo rig geometry
 To recreate the results in Fig. 5-7 of the paper, perform the following steps:
@@ -20,3 +22,5 @@ To recreate the results in Fig. 5-7 of the paper, perform the following steps:
 2) Import dependencies
 3) If desired, modify param values in lines 188-189, 192-195, 204 and 221
 4) Run the "main" script
+
+![rectangle](https://user-images.githubusercontent.com/84905798/130624402-dda6f092-7d94-4dca-a31e-ad217090299e.gif) ![ellipse](https://user-images.githubusercontent.com/84905798/130624394-a707f2ab-e68a-4c77-8c5f-9908dcb9f80e.gif)
