@@ -232,7 +232,7 @@ if __name__ == '__main__':
                              label='{}'.format(round(params[param_n], 2)))
                 if fig_seq_n == 0:
                     axs.flat[fig_seq_n].set_ylabel(shape_list[shape_n] +
-                                                   r' depth error $\varepsilon_d$ (%) $\longrightarrow$', fontsize=14,
+                                                   r' depth error $e_d$ (%) $\longrightarrow$', fontsize=14,
                                                    labelpad=15, loc='bottom')
                     axs.flat[fig_seq_n].yaxis.set_label_coords(-.15, -.9)
                 if fig_list_axes[fig_list[fig_seq_n][0]][0] == 'Eccentricity ratio' and \
