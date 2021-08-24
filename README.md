@@ -22,5 +22,3 @@ To recreate the results in Fig. 5-7 of the paper, perform the following steps:
 2) Import dependencies
 3) If desired, modify param values in lines 188-189, 192-195, 204 and 221
 4) Run the "main" script
-
-![rectangle](https://user-images.githubusercontent.com/84905798/130624402-dda6f092-7d94-4dca-a31e-ad217090299e.gif) ![ellipse](https://user-images.githubusercontent.com/84905798/130624394-a707f2ab-e68a-4c77-8c5f-9908dcb9f80e.gif)
