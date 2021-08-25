@@ -9,7 +9,7 @@ from scipy.optimize import fsolve
 from math import ceil
 
 
-def find_tangent(tang_inputs):
+def find_tangent(tang_inputs, guess):
     a, b, q, r, fx, fy, linenum = tang_inputs
 
     def ellipse_func(input):
@@ -17,12 +17,10 @@ def find_tangent(tang_inputs):
         return [-a * np.sin(theta) + k * a * np.cos(theta) - k * (fx - q),
                  b * np.cos(theta) + k * b * np.sin(theta) - k * (fy - r)]
 
-    guess = np.asarray([np.pi, 1] if linenum in (1, 2) else [0, 1])
-
     theta0, k0 = fsolve(ellipse_func, guess)
     x0, y0 = a * np.cos(theta0) + q, b * np.sin(theta0) + r
 
-    return x0, y0
+    return x0, y0, theta0, k0
 
 
 def plot_stereo_rig_sq(beta=0.5, gamma=1.0, delta=0.4, epsilon=-1.0):
@@ -41,8 +39,8 @@ def plot_stereo_rig_sq(beta=0.5, gamma=1.0, delta=0.4, epsilon=-1.0):
     c = b / gamma
 
     # Compute line parameters
-    step1, step2 = round(sigmoid(B / 2 + e - c / 2)), round(sigmoid(-B / 2 + e - c / 2))
-    step3, step4 = round(sigmoid(-B / 2 - e - c / 2)), round(sigmoid(B / 2 - e - c / 2))
+    step1, step2 = round(sigmoid( B / 2 + e - c / 2)), round(sigmoid(-B / 2 + e - c / 2))
+    step3, step4 = round(sigmoid(-B / 2 - e - c / 2)), round(sigmoid( B / 2 - e - c / 2))
 
     # Line parameters
     K1, K3 = (D + b * step1 + f) / ((B - c) / 2 + e), -(D + b * step2 + f) / ((B + c) / 2 - e)
@@ -93,9 +91,10 @@ def plot_stereo_rig_el(beta=0.5, gamma=1.0, delta=0.4, epsilon=-1.0):
 
     # Compute line params
     x0, y0, fx, q, r = [], [], np.asarray([a/2, a/2 + B, a/2, a/2 + B]), a / 2 + B / 2 + e, D + b / 2
+    guess1, guess2 = [np.pi, np.pi, 0, 0], 25e-5 * np.ones(4)
 
     for k in range(4):
-        xx, yy = find_tangent((c / 2, b / 2, q, r, fx[k], -f, k + 1))
+        xx, yy, theta_, kk = find_tangent((c / 2, b / 2, q, r, fx[k], -f, k + 1), [guess1[k], guess2[k]])
         x0.append(xx), y0.append(yy)
 
     # Anchor points
@@ -149,9 +148,10 @@ def disparity_sq(input=(0.2, 0.5, 0.1, 0.0)):
     return [(yAD - D) / b, (yAD - D) / D]  # block ratio, depth error
 
 
-def disparity_el(input=(0.2, 0.5, 0.1, 0.0)):
-    # Initialize
+def disparity_el(input=(0.2, 0.5, 0.1, 0.0), nextguess=(None, None)):
+    # Unpack
     beta, gamma, delta, epsilon = input
+    guess1, guess2 = nextguess
 
     # Compute parameters with dimensions
     D, e = f / delta, epsilon * B / 2
@@ -159,18 +159,18 @@ def disparity_el(input=(0.2, 0.5, 0.1, 0.0)):
     c = b / gamma
 
     # Compute line params
-    x0, y0, fx, q, r = [], [], np.asarray([a/2, a/2 + B, a/2, a/2 + B]), a / 2 + B / 2 + e, D + b / 2
+    x0, y0, tht0, k0, fx, q, r = [], [], [], [], np.asarray([a/2, a/2 + B, a/2, a/2 + B]), a / 2 + B / 2 + e, D + b / 2
 
     for k in range(4):
-        xx, yy = find_tangent((c / 2, b / 2, q, r, fx[k], -f, k + 1))
-        x0.append(xx), y0.append(yy)
+        xx, yy, theta_, kk = find_tangent((c / 2, b / 2, q, r, fx[k], -f, k + 1), [guess1[k], guess2[k]])
+        x0.append(xx), y0.append(yy), tht0.append(theta_), k0.append(kk)
 
     # Anchor points and average disparity depth
     xAL = a/2 + f/2 * ((x0[0] - a/2) / (y0[0] + f) + (x0[2] - a/2) / (y0[2] + f))
     xAR = a/2 + B + f/2 * ((x0[1] - a/2 - B) / (y0[1] + f) + (x0[3] - a/2 - B) / (y0[3] + f))
     yAD = f * (xAR - xAL) / (xAL - xAR + B)
 
-    return [(yAD - D) / b, (yAD - D) / D]  # block ratio, depth error
+    return [(yAD - D) / b, (yAD - D) / D], [tht0, k0]  # centre = [block ratio, depth error], nextguess
 
 
 if __name__ == '__main__':
@@ -195,7 +195,7 @@ if __name__ == '__main__':
     epsilon = 0  # 2e/B where e is object block excentricity from the midplane
 
     # Lists of shapes, figures and x-axis annotations
-    shape_list, fig_list = ['Rectangle', 'Ellipse'], ['bg', 'db', 'eb', 'dg', 'eg', 'de']
+    shape_list, plotlist = ['Rectangle', 'Ellipse'], ['bg', 'db', 'eb', 'dg', 'eg', 'de']
     fig_list_num = ['01', '20', '30', '21', '31', '23']
     fig_list_axes = {'b': ['Object depth ratio', r'$\beta_o$'], 'g': ['Aspect ratio', r'$\gamma_o$'],
                      'd': ['Inverse depth ratio', r'$\delta_o$'], 'e': ['Eccentricity ratio', r'$\varepsilon_o$']}
@@ -206,26 +206,27 @@ if __name__ == '__main__':
     inputs_def, value = [beta, gamma, delta, epsilon], []
     x, params = np.linspace(0.001, 1.0, x_res), np.linspace(0.001, 1.0, param_res)
     for shape_n in range(len(shape_list)):
-        for row in range(len(fig_list)):
+        for plot in range(len(plotlist)):
             inputs = inputs_def
             for param in params:
-                for x_pos in x:
-                    inputs[int(fig_list_num[row][0])], inputs[int(fig_list_num[row][1])] = x_pos, param
+                nextguess = [[np.pi, np.pi, 0, 0], 25e-5 * np.ones(4)]
+                for x_ in x:
+                    inputs[int(fig_list_num[plot][0])], inputs[int(fig_list_num[plot][1])] = x_, param
                     if shape_n == 0:
                         centre = disparity_sq(inputs)
                     else:
-                        centre = disparity_el(inputs)
+                        centre, nextguess = disparity_el(inputs, nextguess)
                     value.append(centre[1])  # 0...block ratio, 1...depth error
-    value = np.asarray(value).reshape((len(shape_list), len(fig_list), param_res, x_res))
+    value = np.asarray(value).reshape((len(shape_list), len(plotlist), param_res, x_res))
 
     nx_sub = 3  # number of plots in one row
 
     for shape_n in range(len(shape_list)):
-        fig, axs = plt.subplots(ceil(len(fig_list) / nx_sub), nx_sub, sharex=True, figsize=(7.07, 4.9))
+        fig, axs = plt.subplots(ceil(len(plotlist) / nx_sub), nx_sub, sharex=True, figsize=(7.07, 4.9))
         plt.subplots_adjust(left=None, bottom=None, right=None, top=None, wspace=0.25, hspace=0.45)
         fig_seq_n = 0
-        for row in axs:
-            for col in row:
+        for plot in axs:
+            for col in plot:
                 legend_list = []
                 for param_n in range(param_res):
                     col.plot(x, 100 * value[shape_n, fig_seq_n, param_n, :],
@@ -235,18 +236,18 @@ if __name__ == '__main__':
                                                    r' depth error $e_d$ (%) $\longrightarrow$', fontsize=14,
                                                    labelpad=15, loc='bottom')
                     axs.flat[fig_seq_n].yaxis.set_label_coords(-.15, -.9)
-                if fig_list_axes[fig_list[fig_seq_n][0]][0] == 'Eccentricity ratio' and \
-                   fig_list_axes[fig_list[fig_seq_n][1]][0] == 'Aspect ratio' and \
+                if fig_list_axes[plotlist[fig_seq_n][0]][0] == 'Eccentricity ratio' and \
+                   fig_list_axes[plotlist[fig_seq_n][1]][0] == 'Aspect ratio' and \
                    shape_list[shape_n] == 'Ellipse':
                     axs.flat[fig_seq_n].set_ylim(39.9, 40.1)
                     loc2 = pltick.MultipleLocator(base=.1)
                     axs.flat[fig_seq_n].yaxis.set_major_locator(loc2)
-                axs.flat[fig_seq_n].set_xlabel('{}: {} (1) {}'.format(fig_list_axes[fig_list[fig_seq_n][0]][0],
-                                                                      fig_list_axes[fig_list[fig_seq_n][0]][1],
+                axs.flat[fig_seq_n].set_xlabel('{}: {} (1) {}'.format(fig_list_axes[plotlist[fig_seq_n][0]][0],
+                                                                      fig_list_axes[plotlist[fig_seq_n][0]][1],
                                                                       r'$\longrightarrow$'))
                 axs.flat[fig_seq_n].ticklabel_format(useOffset=False, style='plain')
-                axs.flat[fig_seq_n].legend(title='{}: {}'.format(fig_list_axes[fig_list[fig_seq_n][1]][0],
-                                                                 fig_list_axes[fig_list[fig_seq_n][1]][1]),
+                axs.flat[fig_seq_n].legend(title='{}: {}'.format(fig_list_axes[plotlist[fig_seq_n][1]][0],
+                                                                 fig_list_axes[plotlist[fig_seq_n][1]][1]),
                                            loc='upper center', framealpha=1.0, bbox_to_anchor=(.5, 1.3), prop=fontP,
                                            ncol=param_res, labelspacing=0, columnspacing=.5, handlelength=1,
                                            handletextpad=0.3)
