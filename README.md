@@ -9,7 +9,7 @@ To recreate the results in Fig. 8 of the paper, perform the following steps:
 2) Read README_yolov4 file in yolov4 subfolder and follow the steps to configure Tensorflow implementation of YOLOv4
 3) Install LabVIEW Runtime 2019 or newer with Vision Development Module
 4) Attach a stereo rig comprised of two cameras to the development computer
-5) Calibrate the stereo rig using the VI in "calibrate" subfolder and save the calibration file. Replace the old file in "stereo" folder with the new one.
+5) Calibrate the stereo rig by navigating into _LabVIEW Examples > Vision > Stereo > Calibration_ subfolder and running the VI. Save the calibration file to "stereo" subfolder (replace the old file with the new one, if necessary)
 6) Open "main" VI in LabVIEW Runtime
 7) Configure camera VIs to correspond to the connected stereo rig
 8) Run the VI and observe the results (should look as following)
